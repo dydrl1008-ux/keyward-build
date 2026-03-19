@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>네이버 쇼핑 키워드 빌더</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d0d0d;
+  --surface: #161616;
+  --surface2: #1e1e1e;
+  --border: #2a2a2a;
+  --border2: #383838;
+  --text: #f0ede8;
+  --text2: #888580;
+  --text3: #555250;
+  --accent: #c8ff00;
+  --accent-dim: rgba(200,255,0,0.1);
+  --accent-border: rgba(200,255,0,0.28);
+  --red: #ff5555;
+  --radius: 8px;
+  --mono: 'Space Mono', monospace;
+  --sans: 'IBM Plex Sans KR', sans-serif;
+}
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 52px 20px 80px;
+}
+
+.container { max-width: 680px; margin: 0 auto; }
+
+/* HEADER */
+.header { margin-bottom: 40px; }
+
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-dim);
+  padding: 3px 10px;
+  border-radius: 3px;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+h1 em { font-style: normal; color: var(--accent); }
+
+.sub { font-size: 14px; color: var(--text2); line-height: 1.6; }
+
+/* CARD */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 14px;
+}
+
+.field { margin-bottom: 20px; }
+.field:last-child { margin-bottom: 0; }
+
+label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+
+input[type="text"] {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input[type="text"]:focus { border-color: var(--accent); }
+input[type="text"]::placeholder { color: var(--text3); }
+
+/* SLIDER */
+.slider-wrap { display: flex; align-items: center; gap: 14px; }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  flex: 1;
+  height: 3px;
+  background: var(--border2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+.slider-val {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 28px;
+  text-align: right;
+}
+
+.slider-hint { font-size: 11px; color: var(--text3); margin-top: 6px; }
+
+.divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+/* BUTTON */
+.btn-run {
+  width: 100%;
+  background: var(--accent);
+  color: #0d0d0d;
+  border: none;
+  border-radius: 6px;
+  padding: 14px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-run:hover { opacity: 0.88; }
+.btn-run:active { transform: scale(0.99); }
+.btn-run:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0,0,0,0.25);
+  border-top-color: #0d0d0d;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+
+.loading .spinner { display: block; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* RESULT */
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: none;
+  animation: fadeUp 0.22s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+.result-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+
+.char-count { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+.char-count.over { color: var(--red); }
+
+.result-body { padding: 20px; }
+
+.result-text {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text);
+  word-break: break-all;
+  margin-bottom: 16px;
+}
+
+.btn-copy {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 7px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.15s;
+}
+
+.btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+.btn-copy.copied { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* TAGS */
+.tags-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-top: 12px;
+  display: none;
+  animation: fadeUp 0.25s ease;
+}
+
+.tags-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 12px;
+}
+
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.tag-orig  { background: #1e1e1e; border-color: #383838; color: #888580; }
+.tag-main  { background: rgba(100,70,220,0.1); border-color: rgba(140,110,255,0.3); color: #a090ff; }
+.tag-ai    { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); }
+.dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+/* ERROR */
+.err-box {
+  background: rgba(255,85,85,0.07);
+  border: 1px solid rgba(255,85,85,0.25);
+  color: #ff7070;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 13px;
+  display: none;
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 44px;
+  font-family: var(--mono);
+  letter-spacing: 0.05em;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="badge">Naver Shopping</div>
+    <h1>키워드 <em>빌더</em></h1>
+    <p class="sub">상품명 + 메인키워드 → AI가 딱 맞는 추가 명사를 자동으로 뽑아드립니다</p>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>상품명</label>
+      <input type="text" id="productName"
+        placeholder="예: 답례품 결혼식 돌잔치 결혼 조문 회사 선물세트 담은가게" />
+    </div>
+    <div class="field">
+      <label>메인 키워드</label>
+      <input type="text" id="mainKeyword"
+        placeholder="예: 호두정과, 전통한과 (쉼표 또는 띄어쓰기로 구분)" />
+    </div>
+    <div class="field">
+      <label>추가 키워드 개수</label>
+      <div class="slider-wrap">
+        <input type="range" id="addCount" min="1" max="30" value="10" step="1"
+          oninput="document.getElementById('addCountVal').textContent=this.value" />
+        <span class="slider-val" id="addCountVal">10</span>
+      </div>
+      <div class="slider-hint">1 ~ 30개 · 네이버 상품명 권장 100자 이내</div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn-run" id="runBtn" onclick="run()">
+      <div class="spinner"></div>
+      <span id="btnLabel">키워드 생성</span>
+    </button>
+    <div class="err-box" id="errBox"></div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <span class="result-title">완성 상품명</span>
+      <span class="char-count" id="charCount">0자</span>
+    </div>
+    <div class="result-body">
+      <div class="result-text" id="resultText"></div>
+      <button class="btn-copy" id="copyBtn" onclick="copyResult()">복사</button>
+    </div>
+  </div>
+
+  <div class="tags-card" id="tagsCard">
+    <div class="tags-title">키워드 구성</div>
+    <div class="tag-row" id="tagRow"></div>
+    <div class="legend">
+      <span class="legend-item"><span class="dot" style="background:#383838;"></span>원본 상품명</span>
+      <span class="legend-item"><span class="dot" style="background:rgba(140,110,255,0.5);"></span>메인 키워드</span>
+      <span class="legend-item"><span class="dot" style="background:rgba(200,255,0,0.5);"></span>AI 추가</span>
+    </div>
+  </div>
+
+  <div class="footer">keyword-builder · powered by claude</div>
+
+</div>
+<script>
+async function run() {
+  const productName = document.getElementById('productName').value.trim();
+  const mainKeyword = document.getElementById('mainKeyword').value.trim();
+  const addCount    = parseInt(document.getElementById('addCount').value);
+
+  if (!productName) return showErr('상품명을 입력해주세요.');
+  if (!mainKeyword) return showErr('메인 키워드를 입력해주세요.');
+
+  hideErr();
+  setLoading(true);
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('tagsCard').style.display   = 'none';
+
+  const productTokens  = productName.split(/\s+/).filter(Boolean);
+  const mainTokens     = mainKeyword.split(/[\s,，]+/).filter(Boolean);
+  const productSet     = new Set(productTokens.map(t => t.toLowerCase()));
+  const newMainTokens  = mainTokens.filter(t => !productSet.has(t.toLowerCase()));
+  const allExisting    = [...productTokens, ...newMainTokens].map(t => t.toLowerCase());
+
+  const prompt = `네이버 쇼핑에서 소비자가 실제로 검색하는 키워드 기준으로, 아래 상품에 추가할 명사 키워드 ${addCount}개를 뽑아주세요.
+
+상품명: ${productName}
+메인 키워드: ${mainKeyword}
+이미 포함된 단어들: ${allExisting.join(', ')}
+
+규칙:
+1. 이미 포함된 단어와 중복되지 않는 새로운 명사만
+2. 한 단어 또는 두 단어 복합명사 (예: 소포장, 개별포장, 전통과자)
+3. 네이버 쇼핑 실제 검색어 기반으로 관련성 높은 것만
+4. 정확히 ${addCount}개만 출력
+5. 쉼표로 구분, 다른 설명 없이 키워드만 출력
+
+출력 예시: 전통과자, 한과, 소포장, 개별포장, 명절선물`;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const raw  = data.text || '';
+
+    const aiWords = raw
+      .split(/[,，\n]/)
+      .map(s => s.trim().replace(/^[\d\.\-\*\s]+/, ''))
+      .filter(s => s.length > 0 && s.length <= 12 && !allExisting.includes(s.toLowerCase()))
+      .slice(0, addCount);
+
+    const finalTokens = [...productTokens, ...newMainTokens, ...aiWords];
+    const finalText   = finalTokens.join(' ');
+    const charLen     = finalText.length;
+
+    document.getElementById('resultText').textContent = finalText;
+    const cc = document.getElementById('charCount');
+    cc.textContent  = `${charLen}자`;
+    cc.className    = 'char-count' + (charLen > 100 ? ' over' : '');
+
+    const tagRow = document.getElementById('tagRow');
+    tagRow.innerHTML = '';
+    productTokens.forEach(t  => addTag(tagRow, t, 'tag-orig'));
+    newMainTokens.forEach(t  => addTag(tagRow, t, 'tag-main'));
+    aiWords.forEach(t        => addTag(tagRow, t, 'tag-ai'));
+
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('tagsCard').style.display   = 'block';
+
+  } catch (e) {
+    showErr('오류: ' + e.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function addTag(parent, text, cls) {
+  const span = document.createElement('span');
+  span.className   = 'tag ' + cls;
+  span.textContent = text;
+  parent.appendChild(span);
+}
+
+function copyResult() {
+  const text = document.getElementById('resultText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '복사됨 ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+function setLoading(on) {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = on;
+  btn.classList.toggle('loading', on);
+  document.getElementById('btnLabel').textContent = on ? '생성 중...' : '키워드 생성';
+}
+
+function showErr(msg) {
+  const el = document.getElementById('errBox');
+  el.textContent   = msg;
+  el.style.display = 'block';
+}
+
+function hideErr() {
+  document.getElementById('errBox').style.display = 'none';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+</script>
+</body>
+</html>
